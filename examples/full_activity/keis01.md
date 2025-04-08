@@ -28,12 +28,12 @@
 ### 1. Устанавливаем модуль awz.admin
 Модуль хелпер для организации списков в админ панели 
 
-[ссылка на модуль](https://github.com/zahalski/awz.admin)
+[ссылка на модуль](https://github.com/azahalski/awz.admin)
 
 ### 2. Устанавливаем модуль awz.bxapi
 Модуль хелпер для взаимодействия с Битрикс24
 
-[ссылка на модуль](https://github.com/zahalski/awz.bxapi)
+[ссылка на модуль](https://github.com/azahalski/awz.bxapi)
 
 ### 3. Добавляем локальное приложение в Битрикс24
 
@@ -57,7 +57,7 @@
 
 4.3. Загружаем само приложение для Битрикс24, например в папку /bx24/full_activity/
 
-[ссылка на приложение](https://github.com/zahalski/awz.bxapi/tree/main/examples/full_activity/app)
+[ссылка на приложение](https://github.com/azahalski/awz.bxapi/tree/main/examples/full_activity/app)
 
 4.4 Можно прокинуть свои роуты для апи (или оставить стандартную точку доступа через модуль main), например
 
