@@ -660,7 +660,8 @@ class App implements Log\LoggerAwareInterface {
                 '=APP_ID'=>$this->getConfig('APP_ID'),
                 '=ACTIVE'=>$active,
             ),
-            'limit'=>1
+            'limit'=>1,
+            'order'=>['ID'=>'desc']
         );
         $curData = TokensTable::getList($query)->fetch();
         if($active === 'Y' && $curData){
