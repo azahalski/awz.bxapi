@@ -18,6 +18,8 @@ Loc::loadMessages(__FILE__);
 
 class ReviewsTable extends Entity\DataManager
 {
+    const MODULE_ID = 'awz.bxapi';
+
     public static function getFilePath()
     {
         return __FILE__;
@@ -106,7 +108,8 @@ class ReviewsTable extends Entity\DataManager
             $vars = $cache->get($cacheId);
         }else{
             $r = self::getList([
-                'select'=>['ID','MARK','ACTIVE']
+                'select'=>['ID','MARK','ACTIVE'],
+                'filter'=>['=APP'=>$app,'=PORTAL'=>$portal]
             ])->fetch();
             if($r){
                 $vars = $r;
@@ -118,6 +121,46 @@ class ReviewsTable extends Entity\DataManager
         return $vars;
     }
 
+    public static function clickAction($domain, $app_id){
+        $result = new \Bitrix\Main\Result();
+        $moduleId = self::MODULE_ID;
+        $path = Application::getDocumentRoot().'/bitrix/modules/'.$moduleId.'/include/reviews/';
+        $file = new File($path.'click.action');
+        $file2 = new File($path.'click.portals');
+        if($file->isExists()){
+            $current = explode("\n",$file->getContents());
+        }else{
+            $current = [];
+        }
+        if($file2->isExists()){
+            $current2 = explode("\n",$file2->getContents());
+            $current2New = [];
+            foreach($current2 as $row){
+                if(!$row) continue;
+                $rowAr = explode(';',$row);
+                $key = md5($rowAr[0].'_'.$rowAr[1]);
+                $current2New[$key] = $row;
+            }
+            $current2 = $current2New;
+        }else{
+            $current2 = [];
+        }
+        $current[] = implode(";",[$domain, $app_id, time()+5*60]);
+        $current[] = implode(";",[$domain, $app_id, time()+15*60]);
+        $current[] = implode(";",[$domain, $app_id, time()+60*60]);
+        $key = md5($domain.'_'.$app_id);
+        $cnt = 1;
+        if(isset($current2[$key])){
+            $rowAr = explode(';',$current2[$key]);
+            $cnt += intval($rowAr[2]);
+        }
+        $rowTxt = implode(";",[$domain, $app_id, $cnt, date("c")]);
+        $current2[$key] = $rowTxt;
+        $file->putContents(implode("\n",$current));
+        $file2->putContents(implode("\n",$current2));
+        return $result;
+    }
+
     public static function agentGetReviews($pythonPath)
     {
         $tg_func = ['\Awz\BxApi\Helper', 'sendTelegramError'];
@@ -127,6 +170,28 @@ class ReviewsTable extends Entity\DataManager
             $login = Option::get($moduleId, 'bx_market_login', '', '');
             $password = Option::get($moduleId, 'bx_market_psw', '', '');
 
+            $file = new File($path.'click.action');
+            $current = explode("\n",$file->getContents());
+            $minDate = 0;
+            $newRows = [];
+            foreach($current as $row){
+                $rowAr = explode(';',$row);
+                if(isset($rowAr[2])){
+                    if(($minDate < $rowAr[2]) && ($rowAr[2] < time())){
+                        $minDate = $rowAr[2];
+                    }elseif($rowAr[2] > time()){
+                        $newRows[] = $row;
+                    }
+                }
+            }
+            if(!$minDate){
+                return '\Awz\BxApi\ReviewsTable::agentGetReviews("'.$pythonPath.'");';
+            }else{
+                if(method_exists($tg_func[0], $tg_func[1])){
+                    call_user_func_array($tg_func, ['Старт получения отзывов']);
+                }
+            }
+
             $command = escapeshellcmd($pythonPath.' '.$path.'main.py'.' '.$login.' '.$password);
             $output = shell_exec($command);
             if(!$output){
@@ -134,6 +199,7 @@ class ReviewsTable extends Entity\DataManager
             }elseif(mb_strpos($output, 'auth not found')!==false){
                 throw new AccessException('auth not found');
             }
+            $file->putContents(implode("\n", $newRows));
             $fileJson = new File($path.'res.json');
             if($fileJson->isExists()){
                 $jsonData = Json::decode($fileJson->getContents());

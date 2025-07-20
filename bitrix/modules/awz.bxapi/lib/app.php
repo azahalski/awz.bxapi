@@ -21,6 +21,10 @@ class App implements Log\LoggerAwareInterface {
 
     const JSON_REQUEST = 'json';
 
+    const WHITE_OSERVERS = [
+        'oauth.bitrix.info',
+        'oauth.bitrix24.tech'
+    ];
     /**
      * Папка для кеша в /bitrix/cache/
      */
@@ -114,8 +118,10 @@ class App implements Log\LoggerAwareInterface {
             $obCache->clean($cacheId, $this->getCacheDir());
     }
 
-    public function getStartToken(): Result
+    public function getStartToken(string $authDomain = 'oauth.bitrix.info'): Result
     {
+        if(!in_array($authDomain, static::WHITE_OSERVERS))
+            $authDomain = static::WHITE_OSERVERS[0];
 
         $result = new Result();
 
@@ -131,7 +137,7 @@ class App implements Log\LoggerAwareInterface {
                         $this->getRequest()->addFilter(new SetFilter('app_key', $param['key']));
                     }
                     $this->auth = $this->request->toArray();
-                    $url = 'https://oauth.bitrix.info/oauth/token/';
+                    $url = 'https://'.$authDomain.'/oauth/token/';
                     $prepareData = array(
                         'grant_type'=>'authorization_code',
                         'client_id'=>$this->getConfig('APP_ID'),
@@ -186,6 +192,7 @@ class App implements Log\LoggerAwareInterface {
     {
         $this->request = $request;
     }
+
 
     public function createStateSign($data)
     {
@@ -246,10 +253,10 @@ class App implements Log\LoggerAwareInterface {
         $result = new Result();
 
         if(isset($authData['expires']) && $authData['expires']<time()){
-
+            if(!$authData['domain']) $authData['domain'] = 'oauth.bitrix.info';
             //обновить токен
 
-            $url = 'https://oauth.bitrix.info/oauth/token/';
+            $url = 'https://'.$authData['domain'].'/oauth/token/';
             $params = array(
                 'grant_type'=>'refresh_token',
                 'client_id'=>$this->getConfig('APP_ID'),

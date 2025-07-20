@@ -146,18 +146,20 @@ class Controller extends BxController implements Log\LoggerAwareInterface
             if(!empty($this->getErrors())){
                 foreach($this->getErrors() as $error){
                     $logger->error(
-                        "[error]\n{date}\n{code}:{mess}\n",
+                        "[error]\n{date}\n{code}:{mess}\n{url}\n",
                         [
                             'mess' => $error->getMessage(),
                             'code' => $error->getCode(),
+                            'url' => $this->getRequest()->getRequestUri()
                         ]
                     );
                 }
             }else{
                 $logger->debug(
-                    "[response]\n{date}\n{resp}\n",
+                    "[response]\n{date}\n{resp}\n{url}\n",
                     [
-                        'resp' => $response->getContent()
+                        'resp' => $response->getContent(),
+                        'url' => $this->getRequest()->getRequestUri()
                     ]
                 );
             }

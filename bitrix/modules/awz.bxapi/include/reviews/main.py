@@ -19,7 +19,7 @@ def get_path(file):
 def start_params():
     global params
     if not os.path.isfile(get_path('params.json')):
-        with open('params.json', 'w', encoding='utf-8') as f:
+        with open(get_path('params.json'), 'w', encoding='utf-8') as f:
             params['debug'] = True
             json.dump(params, f)
     with open(get_path('params.json'), 'r', encoding='utf-8') as f:
